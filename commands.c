@@ -24,10 +24,11 @@
 #include "lib.h"
 #include "appdb.h"
 #include "ciface.h"
-#include "glcd.h"
 #include "rgbbl.h"
+#include "denlcd.h"
+#include "denkbd.h"
 
-#if 0
+#if 1
 static void sendcrlf(void) {
 	sendstr_P(PSTR("\r\n"));
 }
@@ -52,39 +53,6 @@ void echo_cmd(void) {
 	}
 }
 
-void lcdw_cmd(void)
-{
-	if (token_count >= 3) {
-		uint8_t y = astr2luint(tokenptrs[1]);	
-		uint8_t x = astr2luint(tokenptrs[2]);
-		lcd_gotoxy(x,y);
-		for (uint8_t i=3;i<token_count;i++) {
-			lcd_puts(tokenptrs[i]);
-			lcd_putchar(' ');
-		}
-		
-	}
-}
-
-void ldw_cmd(void)
-{
-	if (token_count >= 3) {
-		uint8_t y = astr2luint(tokenptrs[1]);	
-		uint8_t x = astr2luint(tokenptrs[2]);
-		lcd_gotoxy(x,y);
-		int buflen = 0;
-		for (uint8_t i=3;i<token_count;i++) {
-		    buflen += strlen((char*)tokenptrs[i])+1;
-		}
-        unsigned char *buf = alloca(buflen);
-        buf[0] = 0;
-		for (uint8_t i=3;i<token_count;i++) {
-		    strcat((char*)buf,(char*)tokenptrs[i]);
-		    strcat((char*)buf," ");
-		}
-        lcd_puts_dyn(buf);
-	}
-}
 
 void blset_cmd(void)
 {
@@ -97,142 +65,161 @@ void blset_cmd(void)
 }
 
 
-unsigned char tgt_red;
-unsigned char tgt_green;
-unsigned char tgt_blue;
 
+#define BUFCNT 16
 
-static unsigned char fadechan(unsigned char current, unsigned char target)
+static uint8_t rem_capt(uint8_t *buf, uint8_t len, uint16_t captime) {
+    do {
+        if (uart_isdata()) return 255;
+    } while (PINA&_BV(0));
+    uint8_t pa = PINA&_BV(0);
+    uint8_t n;
+    for (n=0;n<len;n++) {
+        uint8_t i;
+        for (i=0;i<80;i++) {
+            _delay_us(9.1667); // substracted the loop fuzz from 10us
+            if ((PINA&_BV(0)) != pa) break;
+        }
+        buf[n] = i;
+        if (pa) buf[n] |= 0x80;
+        if (captime <= i) {
+            n++;
+            break;
+        }
+        captime -= i;
+        pa = PINA&_BV(0);
+    }
+    return n;
+}
+
+static void printcap(uint8_t pv, uint16_t l)
 {
-	if (current != target) {
-		unsigned char change = current / 16; // Tota voi tuunata...
-		if (!change) change = 1;
-		unsigned char diff;
-		if (current < target) {
-			diff = target - current;
-			if (diff < change) change = diff;
-			current += change;
-		} else {
-			diff = current - target;
-			if (diff < change) change = diff;
-			current -= change;
-		}
-	}
-	return current;
+	unsigned char buf[11];
+    if (pv) SEND('H');
+    else SEND('L');
+	luint2str(buf,l);
+	sendstr(buf);
+    SEND(' ');
 }
 
-static unsigned char cur_red = 0;
-static unsigned char cur_green = 0;
-static unsigned char cur_blue = 0;
-
-void fader(void) {
-	// Funktion sisällä static meinaa että se alustetaan vain kerran ja muistetaan
-	// myöhemmillä kutsuilla. En mä tätä normaalisti kommentois, mutta...
-	cur_red = fadechan(cur_red, tgt_red);
-	cur_green = fadechan(cur_green, tgt_green);
-	cur_blue = fadechan(cur_blue, tgt_blue);
-	rgbbl_set(cur_red, cur_green, cur_blue);
-	_delay_ms(4); // Hidastaa että joku näkeeki jotain.
-}
-
-void fader_cmd(void) {
-	if (token_count >= 7) {
-	        cur_red = astr2luint(tokenptrs[4]);
-	        cur_green = astr2luint(tokenptrs[5]);
-	        cur_blue = astr2luint(tokenptrs[6]);
-	}
-	if (token_count >= 4) {
-	        tgt_red = astr2luint(tokenptrs[1]);
-	        tgt_green = astr2luint(tokenptrs[2]);
-	        tgt_blue = astr2luint(tokenptrs[3]);
-	}
-	unsigned int loops = 0;
-	while ((cur_red != tgt_red) || (cur_green != tgt_green) || (cur_blue != tgt_blue)) {
-		fader();
-		loops++;
-	}
-	luint2outdual(loops);
-}
-
-
-void lcdr_cmd(void)
+void rcapt_cmd(void)
 {
-	lcd_init();
-}
-
-void lcdbr_cmd(void) {
-	if (token_count >= 2) {
-		uint32_t val = astr2luint(tokenptrs[1]);
-		if (val>63) return;
-		st7565_set_contrast(val);
-	}
-}
-
-static void bargraph(uint8_t x, uint8_t y, uint8_t h, uint8_t w, uint8_t f) {
-	struct drawdata *dd;
-	make_drawdata(dd,w,h);
-	drawrect(dd,0,0,w*LCD_CHARW,h*LCD_CHARH,1);
-	fillrect(dd,0,0,f,h*LCD_CHARH,1);
-	lcd_gotoxy(x,y);
-	lcd_write_block(dd->d,w,h);
-}
-
-void lgfxt_cmd(void) {
-    struct drawdata *dd;
-    make_drawdata(dd,LCD_MAXX,LCD_MAXY);
-    uint8_t xc = dd->w/2;
-    uint8_t yc = dd->h/2;
-    fillrect(dd,1,1,6,6,1);
-    fillrect(dd,120,0,8,8,1);
-    fillrect(dd,121,1,6,6,0);
-    drawline(dd,7,9,1,63,1);
-    drawline(dd,1,63,127,57,1);
-    drawline(dd,1,57,127,63,1);
-    drawline(dd,121,9,127,63,1);
-    fillcircle(dd,xc,yc,3,1);
-    drawcircle(dd,xc,yc,5,1);
-    drawcircle(dd,xc,yc,8,1);
-    drawcircle(dd,xc,yc,11,1);
-    drawcircle(dd,xc,yc,14,1);
-    drawcircle(dd,xc,yc,17,1);
-    drawcircle(dd,xc,yc,20,1);
-    lcd_gotoxy(0,0);
-    lcd_write_block(dd->d,LCD_MAXX,LCD_MAXY);
+    uint8_t cc[BUFCNT];
+    uint8_t cd[BUFCNT][20];
+    uint8_t ci;
+    for (ci=0;ci<BUFCNT;ci++) {
+        uint8_t ct = rem_capt(cd[ci],20,10200);
+        if (ct>20) break;
+        cc[ci] = ct;
+        SEND('.');
+    }
+    if (ci) {
+        for (uint8_t n=0;n<ci;n++) {
+            uint8_t pv=0;
+            uint16_t tlt=0;
+            sendcrlf();
+            for (uint8_t z=0;z<cc[n];z++) {
+                if ((cd[n][z]&0x80) != pv) {
+                    printcap(pv,tlt);
+                    tlt = 0;
+                    pv = cd[n][z]&0x80;
+                }
+                tlt += cd[n][z]&0x7F;
+            }
+            printcap(pv,tlt);
+        }
+    }
 }
 
 
-void lcdbg_cmd(void) {
-	if (token_count >= 6) {
-		uint8_t y = astr2luint(tokenptrs[1]);	
-		uint8_t x = astr2luint(tokenptrs[2]);
-		uint8_t h = astr2luint(tokenptrs[3]);	
-		uint8_t w = astr2luint(tokenptrs[4]);
-		uint8_t f = astr2luint(tokenptrs[5]);
-		bargraph(x,y,h,w,f);
-	}
-}
-
-
-
-void lbench_cmd(void) {
-	uint16_t start = TCNT1;
-	for (uint8_t i=0;i<=32;i++) {
-		bargraph(0,0,LCD_MAXY,LCD_MAXX,i*4);
-	}
-	uint16_t passed = TCNT1 - start;
-	luint2outdual(passed);
-}
-
-void lcdc_cmd(void)
+void dkbd_cmd(void)
 {
-	for (uint8_t y=0;y<6;y++) {
-		lcd_gotoxy(0,y);
-		for (uint8_t i=0;i<LCD_MAXX;i++) lcd_putchar(i+(y*16)+32);
-	}
-	for (uint8_t y=6;y<8;y++) {
-		lcd_gotoxy(0,y);
-		for (uint8_t i=0;i<LCD_MAXX;i++) lcd_putchar(i+((y-6)*16)+0xA0);
-	}
+    while (!uart_isdata()) {
+        if (denkbd_isdata()) {
+            uint8_t d = denkbd_getkey();
+            sendstr_P(denkbd_keyname(d));
+            sendcrlf();
+        }
+    }
+}
+
+void dlf_cmd(void)
+{
+    /* pattern, eg 0xFF makes it len 20 0xFF 0xFF ... 0xF8 */
+    /* 0xAA 0x 55 makes 0xAA 0x55 0xAA 0x55 ... 0x58 */
+    if (token_count >= 2) {
+        uint8_t buf[20];
+        uint8_t po = 0;
+        uint8_t pl = token_count - 1;
+        for (uint8_t i=0;i<20;i++) {
+            buf[i] = astr2luint(tokenptrs[1+po]); 
+            po++;
+            if (po>=pl) po = 0; 
+                   }
+        denlcd_frame(buf);
+        sendstr_P(PSTR("DONE"));
+    }
+}
+
+void dls_cmd(void)
+{
+    if (token_count >= 2) {
+        uint8_t buf[19];
+        memset(buf,0,19);
+        denlcd_write_string(buf,tokenptrs[1]);
+        denlcd_frame(buf);
+        sendstr_P(PSTR("DONE"));
+    }
+}
+
+static uint16_t ee_write_string(uint16_t offset, const uint8_t *line)
+{
+    uint16_t len = strlen((char*)line);
+    eeprom_update_block(line,(void*)offset,len);
+    eeprom_update_byte((void*)(offset+len), 0xFF);
+    return offset+len;
+}
+
+void dld_cmd(void)
+{
+    const uint8_t crlf[3] = { '\r', '\n', 0 };
+    uint16_t offset = 0;
+    for (int i=0;i<156;i++) {
+        uint8_t buf[20];
+        uint8_t msg[6];
+        uint8_t desc[16];
+        uint8_t B = i>>3;
+        uint8_t b = 7 - (i&7);
+        memset(buf,0,20);
+        buf[B] |= _BV(b);
+        msg[0] = (B/10) | 0x30;
+        msg[1] = (B%10) | 0x30;
+        msg[2] = '-';
+        msg[3] = 0x30 | b;
+        msg[4] = ':';
+        msg[5] = 0;
+        denlcd_frame(buf);
+        sendcrlf();
+        sendstr(msg);
+        getline(desc,16);
+        if (strncmp_P((char*)desc,PSTR("QUIT"),4)==0) break;
+        offset = ee_write_string(offset,msg);
+        offset = ee_write_string(offset,desc);
+        offset = ee_write_string(offset,crlf);
+    }
+    sendcrlf();
+    sendstr_P(PSTR("Wrote "));
+    luint2outdual(offset);
+    sendstr_P(PSTR(" bytes"));
+}
+
+void eed_cmd(void)
+{
+    for (int i=0;i<2048;i++) {
+        uint8_t b = eeprom_read_byte((void*)i);
+        if ((b>126)||(b<1)) break;
+        SEND(b);
+    }
 }
 
 unsigned long int calc_opdo(unsigned long int val1, unsigned long int val2, unsigned char *op) {

@@ -18,10 +18,10 @@
 ## Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 ##
 
-PROJECT=am644-disp
-DEPS=uart.h main.h stlcdnr.h stlcdhw.h rgbbl.h
-CIFACE_SOURCES=ciface.c console.c lib.c appdb.c commands.c glcd.c stlcdnr.c
-SOURCES=main.c uart.c rgbbl.c $(CIFACE_SOURCES)
+PROJECT=am644-denver
+DEPS=uart.h main.h 
+CIFACE_SOURCES=ciface.c console.c lib.c appdb.c commands.c
+SOURCES=main.c uart.c rgbbl.c denlcd.c denkbd.c $(CIFACE_SOURCES)
 CC=avr-gcc
 LD=avr-ld
 OBJCOPY=avr-objcopy
@@ -33,13 +33,10 @@ UISP=uisp_bbpg
 AVRBINDIR=/usr/avr/bin/
 #AVRDUDECMD=avrdude -p m644p -c dt006 -E noreset
 # If using avr-gcc < 4.6.0, replace -flto with -combine
-CFLAGS=-mmcu=$(MMCU) -Os -mcall-prologues -Wl,--relax -fno-inline-small-functions -fno-tree-scev-cprop -frename-registers -g -Wall -W -pipe -flto -fwhole-program -std=gnu99
+CFLAGS=-mmcu=$(MMCU) -Os -Wl,--relax -fno-inline-small-functions -frename-registers -g -Wall -W -pipe -flto -fwhole-program -std=gnu99
 
 
 all: $(PROJECT).out
-
-glcd-test: glcd-test.c glcd.c glcd.h
-	gcc -O0 -std=gnu99 -DTEST -o glcd-test glcd-test.c glcd.c
 
 
 $(PROJECT).hex: $(PROJECT).out
@@ -96,6 +93,9 @@ sr-program: $(PROJECT).bin serialprogrammer
 	sleep 1s
 	./serialprogrammer $(PROJECT).bin $(SERIAL_DEV)
 
+aprogram: $(PROJECT).bin serialprogrammer
+	./serialprogrammer $(PROJECT).bin $(SERIAL_DEV)
+
 blj-program: $(PROJECT).bin serialprogrammer
 	./serialprogrammer --bljump=1500000 $(PROJECT).bin $(SERIAL_DEV)
 
@@ -103,6 +103,6 @@ serialprogrammer: serialprogrammer.c
 	gcc -W -Wall -Os -o serialprogrammer serialprogrammer.c
 
 objdump: $(PROJECT).out
-	$(AVRBINDIR)avr-objdump -xd $(PROJECT).out | less
+	$(AVRBINDIR)avr-objdump -xdS $(PROJECT).out | less
 
 

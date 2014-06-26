@@ -25,7 +25,7 @@
 #include "lib.h"
 #include "ciface.h"
 
-#define RECVBUFLEN 64
+#define RECVBUFLEN 96
 
 const unsigned char prompt[] PROGMEM = "\x0D\x0A> ";
 unsigned char recvbuf[RECVBUFLEN];

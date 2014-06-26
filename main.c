@@ -22,6 +22,9 @@
 #include "uart.h"
 #include "ciface.h"
 #include "rgbbl.h"
+#include "denlcd.h"
+#include "denkbd.h"
+
 static void mainloop(void);
 
 int main(void) {
@@ -32,6 +35,9 @@ int main(void) {
 	power_timer2_enable();
 	power_twi_disable();
 	rgbbl_init();
+	denlcd_init();
+	denkbd_init();
+	sei();
 	mainloop();
 }
 
