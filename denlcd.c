@@ -101,8 +101,8 @@ void denlcd_init(void)
     denlcd_frame(init_frame);
 }
 
-#define FONT_BASE 0x30
-#define FONT_COUNT 10
+#define FONT_BASE 0x20
+#define FONT_COUNT 95
 
 
 #define VUR 0x0001
@@ -144,17 +144,116 @@ LL  B  RR
 */
 
 static const uint16_t fontdata[FONT_COUNT] PROGMEM = {
-    UPB | DNB | VUL | VUR | VDL | VDR, // 0
+    0, // ' '
+    VUL | DDL, // !
+    VUL | VUR, // "
+    UPB | HML | HMR | VMB | VUR | VDR, // #
+    VMB | UPB | DNB | HML | HMR | VUL | VDR, // $
+    DUR | DDL | DUL | DDR | HML | HMR | VUL | VDR, // %
+    0, // &
+    DUR, // '
+    DUR | DDR, // (
+    DUL | DDL, // )
+    VMB | HML | HMR | DUL | DUR | DDL | DDR, // *
+    VMB | HML | HMR, // +
+    DDL, // ,
+    HML | HMR, // -
+    0, // .
+    DUR | DDL, // /
+    UPB | DNB | VUL | VUR | VDL | VDR | DDL | DUR, // 0
     VUR | VDR, // 1
     UPB | VUR | HMR | HML | VDL | DNB, // 2
     UPB | VUR | HMR | VDR | DNB, // 3
     VUL | HML | HMR | VUR | VDR, // 4
     UPB | VUL | HML | HMR | VDR | DNB, // 5
     UPB | VUL | HML | HMR | VDR | DNB | VDL, // 6
-    UPB | VUR | VDR, // 7, EXP.
+    UPB | VUR | VDR, // 7
     UPB | VUL | VUR | VDL | VDR | DNB | HML | HMR, // 8
     UPB | VUL | VUR | HML | HMR | VDR | DNB, // 9
+    0, //:
+    HML | DDL, //;
+    DUR | DDR, //<
+    HML | HMR | UPB, //=
+    DUL | DDL, //>
+    UPB | VUR | HMR | DDL, // ?
+    0, // @
+    UPB | VUL | VUR | HML | HMR | VDL | VDR, // A
+    VUL | VDL | HML | HMR | VDR | DNB, // b
+    UPB | VUL | VDL | DNB, // C
+    VUR | VDR | HML | HMR | VDL | DNB, // d
+    UPB | VUL | HML | VDL | DNB, // E
+    UPB | VUL | HML | VDL, // F
+    HMR | VDR | DNB | VDL | VUL | UPB, // G
+    VUL | VDL | HML | HMR | VUR | VDR, //  H
+    UPB | VMB | DNB, // I
+    VUR | VDR | DNB | VDL, // J
+    VUL | VDL | HML | DUR | DDR, // K
+    VUL | VDL | DNB, // L
+    VUL | VDL | DUL | DUR | VUR | VDR, // M
+    VUL | VDL | DUL | DDR | VDR | VUR, // N
+    UPB | VUL | VDL | DNB | VDR | VUR, // O
+    UPB | VUL | VUR | HML | HMR | VDL, // P
+    UPB | VUL | VDL | DNB | VDR | VUR | DDR, // Q
+    UPB | VUL | HML | HMR | VUR | VDL | DDR, // R
+    UPB | VUL | HML | HMR | VDR | DNB, // S
+    UPB | VMB, // T
+    VUL | VDL | DNB | VDR | VUR, // U
+    DUL | DDR | VDR | VUR, // V
+    VUL | VDL | DDL | DDR | VDR | VUR, // W
+    DUL | DUR | DDL | DDR, //X
+    DUL | DUR | DDL, // Y
+    UPB | DUR | DDL | DNB, // Z
+    VMB | DUR | DDR, // [
+    DUL | DDR, // '\'
+    VMB | DUL | DDL, // ]
+    DDL | DDR, // ^
+    DNB, // _
+    DUL, // `
+    UPB | VUR | HML | HMR | VDL | VDR | DNB, // a
+    VUL | VDL | HML | HMR | VDR | DNB, // b
+    HML | HMR | VDL | DNB, // c
+    VUR | VDR | HML | HMR | VDL | DNB, // d
+    UPB | VUL | HML | VDL | DNB, // E
+    UPB | VUL | HML | VDL, // F
+    HMR | VDR | DNB | VDL | VUL | UPB, // G
+    VUL | VDL | HML | HMR | VDR, //  h
+    UPB | VMB | DNB, // I
+    VUR | VDR | DNB | VDL, // J
+    VUL | VDL | HML | DUR | DDR, // K
+    VUL | VDL | DNB, // L
+    VUL | VDL | DUL | DUR | VUR | VDR, // M
+    VDL | HML | HMR | VDR, // n
+    VDL | DNB | VDR | HML | HMR, // o
+    UPB | VUL | VUR | HML | HMR | VDL, // P
+    UPB | VUL | VDL | DNB | VDR | VUR | DDR, // Q
+    UPB | VUL | HML | HMR | VUR | VDL | DDR, // R
+    UPB | VUL | HML | HMR | VDR | DNB, // S
+    UPB | VMB, // T
+    VDL | DNB | VDR, // u
+    DUL | DDR | VDR | VUR, // V
+    VUL | VDL | DDL | DDR | VDR | VUR, // W
+    DUL | DUR | DDL | DDR, //X
+    DUL | DUR | DDL, // Y
+    UPB | DUR | DDL | DNB, // Z
+    VMB | DUR | DDR | HML, // {
+    VMB, // |
+    VMB | DUL | DDL | HMR, // }
+    VUL | DUL | HML | HMR | VDR | DDR, // ~
 };
+
+/*
+|--UPB--|
+VD  V  DV
+U U M U U
+L  LBR  R
+|HML HMR|
+V  DVD  V
+D D M D D
+LL  B  RR
+|--DNB--|
+*/
+
+
 
 static void denlcd_plot_char(uint8_t* buf, uint8_t idx, uint8_t ch)
 {

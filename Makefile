@@ -102,7 +102,10 @@ blj-program: $(PROJECT).bin serialprogrammer
 serialprogrammer: serialprogrammer.c
 	gcc -W -Wall -Os -o serialprogrammer serialprogrammer.c
 
+objdumpS: $(PROJECT).out
+	$(AVRBINDIR)avr-objdump -xdCS $(PROJECT).out | less
+
 objdump: $(PROJECT).out
-	$(AVRBINDIR)avr-objdump -xdS $(PROJECT).out | less
+	$(AVRBINDIR)avr-objdump -xdC $(PROJECT).out | less
 
 
