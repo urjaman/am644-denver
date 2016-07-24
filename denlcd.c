@@ -239,6 +239,71 @@ static const uint16_t fontdata[FONT_COUNT] PROGMEM = {
     VMB, // |
     VMB | DUL | DDL | HMR, // }
     VUL | DUL | HML | HMR | VDR | DDR, // ~
+    0,
+    UPB | VUL | VDL | DNB | HML, // €
+    0,
+    DDL,
+    UPB | VUL | HML | VDL, // f
+    DDL | VDR, // ,,
+    DNB, // ...
+    VMB | HML | HMR, // cross
+    VMB | HML | HMR | UPB, // dl cross
+    DDL | DDR, // ^
+    0,
+    UPB | VUL | HML | HMR | VDR | DNB, // S\/
+    DUR | DDR, // <
+    UPB | VUL | HML | VDL | DNB | VMB | HMR, //OE
+    0,
+    UPB | DUR | DDL | DNB, // Z\/
+    0,
+    0,
+    DUL,
+    DUR,
+    DUL | VUR,
+    VUL | DUR,
+    VMB | HML | HMR | DUL | DUR | DDL | DDR,
+    HML,
+    HML | HMR,
+    UPB,
+    0,
+    UPB | VUL | HML | HMR | VDR | DNB, // s\/
+    DUL | DDL,
+    UPB | VUL | HML | VDL | DNB | VMB | HMR, //oe
+    0,
+    UPB | DUR | DDL | DNB, // Z\/
+    DUL | DUR | DDL, // Ÿ
+    0, // NBSP
+    VDR | DUR, // Inv !
+    VMB | DNB | VDL | HML | HMR, // cent
+    0,
+    0,
+    0,
+    VMB, // |
+    0,
+    VUL | VUR //",
+    HML | HMR | VDL | DNB | UPB, // copyright
+    0,
+    DUR | DDR,//<<
+    HML | HMR | VDR,
+    HML, // SHY
+    UPB | VUR | HMR | HML | VUL | VDL | DDR, // (R)
+    UPB, // Macron
+    UPB | VUR | VUL | HML | HMR, // °
+    VMB | HML | HMR | DNB,
+    0,
+    0,
+    DUR,
+    VUL | VDL | HML | HMR | VUR, // micro
+    0.
+    DDL,
+    DDL,
+    0,
+    UPB | VUL | VUR | HML | HMR | DNB,
+    DUL | DDL, // >>
+    0,
+    0,
+    0,
+    0, // inverted ? (0xBF)
 };
 
 /*
